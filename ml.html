@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<!-- saved from url=(0027)https://katb.in/batanapetah -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+      <title>Katbin - batanapetah</title>
+
+    <title itemprop="name">Katbin</title>
+
+    <meta property="og:type" content="object">
+    <meta property="og:title" content="Katbin">
+    <meta property="og:image" content="/favicon.ico">
+
+    <meta name="twitter:title" content="Katbin">
+    <meta itemprop="name" content="Katbin">
+    <meta name="application-name" content="Katbin">
+    <meta property="og:site_name" content="Katbin">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta property="og:locale" content="en">
+    <meta name="language" content="en">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:site" content="@Spherical_Kat">
+    <meta name="twitter:image" content="/favicon.ico">
+
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    <meta name="keywords" content="paste,pastebin,url,urlshortener,url-shortener,code,programming,bin,cat,kat,paste,share,save,login">
+    <meta name="coverage" content="Worldwide">
+    <meta name="distribution" content="Global">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="apple-mobile-web-app-title" content="Katbin">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-touch-fullscreen" content="yes">
+
+        <meta name="description" content="1)Linear Regression
+
+a-&gt;import pandas as pd
+   import numpy as np
+b-&gt;data = {
+  &quot;x&quot;: [1,2,3,4,5],
+  &quot;y&quot;: [1.2,1.8,2.6,3.2,3.8]
+}
+df=pd.DataFrame(data)
+c-&gt;df
+
+d-&gt;x_mean=0
+   y_mean=0
+   xysum=0
+   x_square=0
+   for i in range(len(df[&#39;x&#39;])):
+        x_mean = (x_mean + df[&#39;x&#39;][i])
+        meanx = x_mean/len(df[&#39;x&#39;])
+        y_mean = (y_mean + df[&#39;y&#39;][i])
+        meany = y_mean/len(df[&#39;x&#39;])
+        xysum =xysum+(df[&#39;x&#39;][i]*df[&#39;y&#39;][i])
+        meanxy=  xysum/len(df[&#39;x&#39;])
+        x_square=x_square+(df[&#39;x&#39;][i]*df[&#39;x&#39;][i])
+        meanxsq=  x_square/len(df[&#39;x&#39;])
+
+  print(meanx)
+  print(meany)
+  print(meanxy)
+  print(meanxsq)
+
+-&gt;a1num=(meanxy-(meanx*meany))
+  a1den=(meanxsq) - (meanx*meanx)
+  print(a1num)
+  print(a1den)
+  a1=a1num/a1den
+  a1
+
+-&gt;a0=meany-a1*meanx
+  a0
+
+-&gt;print(f&#39; The regression equation is y = {a0} + {a1}x&#39;)
+
+###############################################################
+
+2)Least Square 
+
+a-&gt;import numpy as np
+b-&gt;x = np.array([2006, 2007, 2008, 2009, 2010])
+   y = np.array([40, 56, 78, 80, 40])
+c-&gt;y_sum = sum(y)
+   print (&quot;Sum of y:&quot;,y_sum)
+d-&gt;x_median = 2008
+
+   print(&quot;x median:&quot;, x_median)
+
+   x_value = (x-x_median)
+   print (x_value)
+   x_sqr = sum(x_value**2)
+   print (x_sqr)
+
+e-&gt;xy = (x_value*y)
+   xy_sum = sum(x_value*y)
+   print(xy)
+
+   print(xy_sum)
+   n =len(x)
+   print (n)
+
+f-&gt;a = y_sum/n
+   print (a)
+   b = xy_sum/x_sqr
+   print(b)
+   for i in range(len(x_value)):
+       y_new = a + b * x_value[i]
+       print(y_new)
+g-&gt;print(x)
+   print(y)
+   print(xy)
+   print(x_value)
+   for i in range(len(x_value)):
+       y_new = a + b * x_value[i]
+       print(y_new)
+
+################################################################
+
+3)SVM
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+iris = datasets.load_iris()
+X = iris.data[:, :2] 
+y = iris.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+svm_clf = SVC(kernel=&#39;linear&#39;)
+svm_clf.fit(X_train, y_train)
+y_pred = svm_clf.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(&quot;Accuracy:&quot;, accuracy)
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                     np.arange(y_min, y_max, 0.1))
+Z = svm_clf.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+
+plt.contourf(xx, yy, Z, alpha=0.4)
+plt.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor=&#39;k&#39;)
+plt.xlabel(&#39;Sepal length&#39;)
+plt.ylabel(&#39;Sepal width&#39;)
+plt.title(&#39;Support Vector Machine (SVM)&#39;)
+plt.show()
+
+##########################################################################################
+
+4)Logistic Regression
+
+-&gt;from sklearn import datasets
+  import numpy as np
+  from sklearn.linear_model import LogisticRegression
+  import matplotlib.pyplot as plt
+-&gt;iris = datasets.load_iris()
+-&gt;print(list(iris.keys()))
+-&gt;print(iris[&quot;data&quot;])
+-&gt;print(iris[&#39;data&#39;].shape)
+-&gt;x=iris[&quot;data&quot;][:,3:]
+-&gt;print(x)
+-&gt;print(iris[&#39;target&#39;])
+-&gt;print(iris[&quot;DESCR&quot;])
+-&gt;y=(iris[&quot;target&quot;]==2)
+-&gt;print(y.astype(np.int32))
+-&gt;clf=LogisticRegression()
+  clf.fit(x,y)
+-&gt;example=clf.predict(([[2.6]]))
+  example
+-&gt;X_new=np.linspace(0,3,1000).reshape(-1,1)
+  print(X_new)
+-&gt;Y_prob=clf.predict_proba(X_new)
+  Y_prob
+-&gt;plt.plot(X_new,Y_prob[:,1],&quot;-g&quot;,label=&quot;Virginica&quot;)
+  plt.show()
+
+
+
+">
+        <meta itemprop="description" content="1)Linear Regression
+
+a-&gt;import pandas as pd
+   import numpy as np
+b-&gt;data = {
+  &quot;x&quot;: [1,2,3,4,5],
+  &quot;y&quot;: [1.2,1.8,2.6,3.2,3.8]
+}
+df=pd.DataFrame(data)
+c-&gt;df
+
+d-&gt;x_mean=0
+   y_mean=0
+   xysum=0
+   x_square=0
+   for i in range(len(df[&#39;x&#39;])):
+        x_mean = (x_mean + df[&#39;x&#39;][i])
+        meanx = x_mean/len(df[&#39;x&#39;])
+        y_mean = (y_mean + df[&#39;y&#39;][i])
+        meany = y_mean/len(df[&#39;x&#39;])
+        xysum =xysum+(df[&#39;x&#39;][i]*df[&#39;y&#39;][i])
+        meanxy=  xysum/len(df[&#39;x&#39;])
+        x_square=x_square+(df[&#39;x&#39;][i]*df[&#39;x&#39;][i])
+        meanxsq=  x_square/len(df[&#39;x&#39;])
+
+  print(meanx)
+  print(meany)
+  print(meanxy)
+  print(meanxsq)
+
+-&gt;a1num=(meanxy-(meanx*meany))
+  a1den=(meanxsq) - (meanx*meanx)
+  print(a1num)
+  print(a1den)
+  a1=a1num/a1den
+  a1
+
+-&gt;a0=meany-a1*meanx
+  a0
+
+-&gt;print(f&#39; The regression equation is y = {a0} + {a1}x&#39;)
+
+###############################################################
+
+2)Least Square 
+
+a-&gt;import numpy as np
+b-&gt;x = np.array([2006, 2007, 2008, 2009, 2010])
+   y = np.array([40, 56, 78, 80, 40])
+c-&gt;y_sum = sum(y)
+   print (&quot;Sum of y:&quot;,y_sum)
+d-&gt;x_median = 2008
+
+   print(&quot;x median:&quot;, x_median)
+
+   x_value = (x-x_median)
+   print (x_value)
+   x_sqr = sum(x_value**2)
+   print (x_sqr)
+
+e-&gt;xy = (x_value*y)
+   xy_sum = sum(x_value*y)
+   print(xy)
+
+   print(xy_sum)
+   n =len(x)
+   print (n)
+
+f-&gt;a = y_sum/n
+   print (a)
+   b = xy_sum/x_sqr
+   print(b)
+   for i in range(len(x_value)):
+       y_new = a + b * x_value[i]
+       print(y_new)
+g-&gt;print(x)
+   print(y)
+   print(xy)
+   print(x_value)
+   for i in range(len(x_value)):
+       y_new = a + b * x_value[i]
+       print(y_new)
+
+################################################################
+
+3)SVM
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+iris = datasets.load_iris()
+X = iris.data[:, :2] 
+y = iris.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+svm_clf = SVC(kernel=&#39;linear&#39;)
+svm_clf.fit(X_train, y_train)
+y_pred = svm_clf.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(&quot;Accuracy:&quot;, accuracy)
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                     np.arange(y_min, y_max, 0.1))
+Z = svm_clf.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+
+plt.contourf(xx, yy, Z, alpha=0.4)
+plt.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor=&#39;k&#39;)
+plt.xlabel(&#39;Sepal length&#39;)
+plt.ylabel(&#39;Sepal width&#39;)
+plt.title(&#39;Support Vector Machine (SVM)&#39;)
+plt.show()
+
+##########################################################################################
+
+4)Logistic Regression
+
+-&gt;from sklearn import datasets
+  import numpy as np
+  from sklearn.linear_model import LogisticRegression
+  import matplotlib.pyplot as plt
+-&gt;iris = datasets.load_iris()
+-&gt;print(list(iris.keys()))
+-&gt;print(iris[&quot;data&quot;])
+-&gt;print(iris[&#39;data&#39;].shape)
+-&gt;x=iris[&quot;data&quot;][:,3:]
+-&gt;print(x)
+-&gt;print(iris[&#39;target&#39;])
+-&gt;print(iris[&quot;DESCR&quot;])
+-&gt;y=(iris[&quot;target&quot;]==2)
+-&gt;print(y.astype(np.int32))
+-&gt;clf=LogisticRegression()
+  clf.fit(x,y)
+-&gt;example=clf.predict(([[2.6]]))
+  example
+-&gt;X_new=np.linspace(0,3,1000).reshape(-1,1)
+  print(X_new)
+-&gt;Y_prob=clf.predict_proba(X_new)
+  Y_prob
+-&gt;plt.plot(X_new,Y_prob[:,1],&quot;-g&quot;,label=&quot;Virginica&quot;)
+  plt.show()
+
+
+
+">
+        <meta property="og:description" content="1)Linear Regression
+
+a-&gt;import pandas as pd
+   import numpy as np
+b-&gt;data = {
+  &quot;x&quot;: [1,2,3,4,5],
+  &quot;y&quot;: [1.2,1.8,2.6,3.2,3.8]
+}
+df=pd.DataFrame(data)
+c-&gt;df
+
+d-&gt;x_mean=0
+   y_mean=0
+   xysum=0
+   x_square=0
+   for i in range(len(df[&#39;x&#39;])):
+        x_mean = (x_mean + df[&#39;x&#39;][i])
+        meanx = x_mean/len(df[&#39;x&#39;])
+        y_mean = (y_mean + df[&#39;y&#39;][i])
+        meany = y_mean/len(df[&#39;x&#39;])
+        xysum =xysum+(df[&#39;x&#39;][i]*df[&#39;y&#39;][i])
+        meanxy=  xysum/len(df[&#39;x&#39;])
+        x_square=x_square+(df[&#39;x&#39;][i]*df[&#39;x&#39;][i])
+        meanxsq=  x_square/len(df[&#39;x&#39;])
+
+  print(meanx)
+  print(meany)
+  print(meanxy)
+  print(meanxsq)
+
+-&gt;a1num=(meanxy-(meanx*meany))
+  a1den=(meanxsq) - (meanx*meanx)
+  print(a1num)
+  print(a1den)
+  a1=a1num/a1den
+  a1
+
+-&gt;a0=meany-a1*meanx
+  a0
+
+-&gt;print(f&#39; The regression equation is y = {a0} + {a1}x&#39;)
+
+###############################################################
+
+2)Least Square 
+
+a-&gt;import numpy as np
+b-&gt;x = np.array([2006, 2007, 2008, 2009, 2010])
+   y = np.array([40, 56, 78, 80, 40])
+c-&gt;y_sum = sum(y)
+   print (&quot;Sum of y:&quot;,y_sum)
+d-&gt;x_median = 2008
+
+   print(&quot;x median:&quot;, x_median)
+
+   x_value = (x-x_median)
+   print (x_value)
+   x_sqr = sum(x_value**2)
+   print (x_sqr)
+
+e-&gt;xy = (x_value*y)
+   xy_sum = sum(x_value*y)
+   print(xy)
+
+   print(xy_sum)
+   n =len(x)
+   print (n)
+
+f-&gt;a = y_sum/n
+   print (a)
+   b = xy_sum/x_sqr
+   print(b)
+   for i in range(len(x_value)):
+       y_new = a + b * x_value[i]
+       print(y_new)
+g-&gt;print(x)
+   print(y)
+   print(xy)
+   print(x_value)
+   for i in range(len(x_value)):
+       y_new = a + b * x_value[i]
+       print(y_new)
+
+################################################################
+
+3)SVM
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+iris = datasets.load_iris()
+X = iris.data[:, :2] 
+y = iris.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+svm_clf = SVC(kernel=&#39;linear&#39;)
+svm_clf.fit(X_train, y_train)
+y_pred = svm_clf.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(&quot;Accuracy:&quot;, accuracy)
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                     np.arange(y_min, y_max, 0.1))
+Z = svm_clf.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+
+plt.contourf(xx, yy, Z, alpha=0.4)
+plt.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor=&#39;k&#39;)
+plt.xlabel(&#39;Sepal length&#39;)
+plt.ylabel(&#39;Sepal width&#39;)
+plt.title(&#39;Support Vector Machine (SVM)&#39;)
+plt.show()
+
+##########################################################################################
+
+4)Logistic Regression
+
+-&gt;from sklearn import datasets
+  import numpy as np
+  from sklearn.linear_model import LogisticRegression
+  import matplotlib.pyplot as plt
+-&gt;iris = datasets.load_iris()
+-&gt;print(list(iris.keys()))
+-&gt;print(iris[&quot;data&quot;])
+-&gt;print(iris[&#39;data&#39;].shape)
+-&gt;x=iris[&quot;data&quot;][:,3:]
+-&gt;print(x)
+-&gt;print(iris[&#39;target&#39;])
+-&gt;print(iris[&quot;DESCR&quot;])
+-&gt;y=(iris[&quot;target&quot;]==2)
+-&gt;print(y.astype(np.int32))
+-&gt;clf=LogisticRegression()
+  clf.fit(x,y)
+-&gt;example=clf.predict(([[2.6]]))
+  example
+-&gt;X_new=np.linspace(0,3,1000).reshape(-1,1)
+  print(X_new)
+-&gt;Y_prob=clf.predict_proba(X_new)
+  Y_prob
+-&gt;plt.plot(X_new,Y_prob[:,1],&quot;-g&quot;,label=&quot;Virginica&quot;)
+  plt.show()
+
+
+
+">
+        <meta name="twitter:description" content="1)Linear Regression
+
+a-&gt;import pandas as pd
+   import numpy as np
+b-&gt;data = {
+  &quot;x&quot;: [1,2,3,4,5],
+  &quot;y&quot;: [1.2,1.8,2.6,3.2,3.8]
+}
+df=pd.DataFrame(data)
+c-&gt;df
+
+d-&gt;x_mean=0
+   y_mean=0
+   xysum=0
+   x_square=0
+   for i in range(len(df[&#39;x&#39;])):
+        x_mean = (x_mean + df[&#39;x&#39;][i])
+        meanx = x_mean/len(df[&#39;x&#39;])
+        y_mean = (y_mean + df[&#39;y&#39;][i])
+        meany = y_mean/len(df[&#39;x&#39;])
+        xysum =xysum+(df[&#39;x&#39;][i]*df[&#39;y&#39;][i])
+        meanxy=  xysum/len(df[&#39;x&#39;])
+        x_square=x_square+(df[&#39;x&#39;][i]*df[&#39;x&#39;][i])
+        meanxsq=  x_square/len(df[&#39;x&#39;])
+
+  print(meanx)
+  print(meany)
+  print(meanxy)
+  print(meanxsq)
+
+-&gt;a1num=(meanxy-(meanx*meany))
+  a1den=(meanxsq) - (meanx*meanx)
+  print(a1num)
+  print(a1den)
+  a1=a1num/a1den
+  a1
+
+-&gt;a0=meany-a1*meanx
+  a0
+
+-&gt;print(f&#39; The regression equation is y = {a0} + {a1}x&#39;)
+
+###############################################################
+
+2)Least Square 
+
+a-&gt;import numpy as np
+b-&gt;x = np.array([2006, 2007, 2008, 2009, 2010])
+   y = np.array([40, 56, 78, 80, 40])
+c-&gt;y_sum = sum(y)
+   print (&quot;Sum of y:&quot;,y_sum)
+d-&gt;x_median = 2008
+
+   print(&quot;x median:&quot;, x_median)
+
+   x_value = (x-x_median)
+   print (x_value)
+   x_sqr = sum(x_value**2)
+   print (x_sqr)
+
+e-&gt;xy = (x_value*y)
+   xy_sum = sum(x_value*y)
+   print(xy)
+
+   print(xy_sum)
+   n =len(x)
+   print (n)
+
+f-&gt;a = y_sum/n
+   print (a)
+   b = xy_sum/x_sqr
+   print(b)
+   for i in range(len(x_value)):
+       y_new = a + b * x_value[i]
+       print(y_new)
+g-&gt;print(x)
+   print(y)
+   print(xy)
+   print(x_value)
+   for i in range(len(x_value)):
+       y_new = a + b * x_value[i]
+       print(y_new)
+
+################################################################
+
+3)SVM
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+iris = datasets.load_iris()
+X = iris.data[:, :2] 
+y = iris.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+svm_clf = SVC(kernel=&#39;linear&#39;)
+svm_clf.fit(X_train, y_train)
+y_pred = svm_clf.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(&quot;Accuracy:&quot;, accuracy)
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                     np.arange(y_min, y_max, 0.1))
+Z = svm_clf.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+
+plt.contourf(xx, yy, Z, alpha=0.4)
+plt.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor=&#39;k&#39;)
+plt.xlabel(&#39;Sepal length&#39;)
+plt.ylabel(&#39;Sepal width&#39;)
+plt.title(&#39;Support Vector Machine (SVM)&#39;)
+plt.show()
+
+##########################################################################################
+
+4)Logistic Regression
+
+-&gt;from sklearn import datasets
+  import numpy as np
+  from sklearn.linear_model import LogisticRegression
+  import matplotlib.pyplot as plt
+-&gt;iris = datasets.load_iris()
+-&gt;print(list(iris.keys()))
+-&gt;print(iris[&quot;data&quot;])
+-&gt;print(iris[&#39;data&#39;].shape)
+-&gt;x=iris[&quot;data&quot;][:,3:]
+-&gt;print(x)
+-&gt;print(iris[&#39;target&#39;])
+-&gt;print(iris[&quot;DESCR&quot;])
+-&gt;y=(iris[&quot;target&quot;]==2)
+-&gt;print(y.astype(np.int32))
+-&gt;clf=LogisticRegression()
+  clf.fit(x,y)
+-&gt;example=clf.predict(([[2.6]]))
+  example
+-&gt;X_new=np.linspace(0,3,1000).reshape(-1,1)
+  print(X_new)
+-&gt;Y_prob=clf.predict_proba(X_new)
+  Y_prob
+-&gt;plt.plot(X_new,Y_prob[:,1],&quot;-g&quot;,label=&quot;Virginica&quot;)
+  plt.show()
+
+
+
+">
+
+        <meta name="url" content="https://katb.in/batanapetah">
+        <meta name="twitter:url" content="https://katb.in/batanapetah">
+        <meta property="og:url" content="https://katb.in/batanapetah">
+
+    <link rel="stylesheet" href="./ml_files/app-117d7b0eb84f14ec8ff21d995dd182e5.css">
+    <script defer="" type="text/javascript" src="./ml_files/app-79a10a4821c0ade7796803e5d9b9d1cb.js.download"></script>
+  </head>
+  <body class="flex flex-col ">
+    <header class="flex w-full justify-between items-center py-3 px-6">
+     <a href="https://katb.in/">
+        <span class="font-semibold text-xl tracking-tight">
+          <span class="text-amber text-xl">&lt;Kat</span>bin/&gt;
+        </span>
+      </a>
+
+      <nav role="navigation">
+        <ul>
+
+        </ul>
+<ul>
+
+		<li><a href="https://katb.in/users/register">Register</a></li>
+		<li><a href="https://katb.in/users/log_in">Log in</a></li>
+
+</ul>
+      </nav>
+
+    </header>
+    <main class="flex flex-col w-full h-full max-h-full overflow-hidden bg-light-grey" role="main">
+      <p class="alert alert-info" role="alert"></p>
+      <p class="alert alert-danger" role="alert"></p>
+<div class="flex relative flex-col w-full h-full">
+	<div class="flex absolute top-0 right-0 p-4">
+
+	</div>
+
+		<code class="break-word px-6 py-4 h-full w-full overflow-y-auto"><span class="text plain">1)Linear Regression
+
+a-&gt;import pandas as pd
+   import numpy as np
+b-&gt;data = {
+  "x": [1,2,3,4,5],
+  "y": [1.2,1.8,2.6,3.2,3.8]
+}
+df=pd.DataFrame(data)
+c-&gt;df
+
+d-&gt;x_mean=0
+   y_mean=0
+   xysum=0
+   x_square=0
+   for i in range(len(df['x'])):
+        x_mean = (x_mean + df['x'][i])
+        meanx = x_mean/len(df['x'])
+        y_mean = (y_mean + df['y'][i])
+        meany = y_mean/len(df['x'])
+        xysum =xysum+(df['x'][i]*df['y'][i])
+        meanxy=  xysum/len(df['x'])
+        x_square=x_square+(df['x'][i]*df['x'][i])
+        meanxsq=  x_square/len(df['x'])
+
+  print(meanx)
+  print(meany)
+  print(meanxy)
+  print(meanxsq)
+
+-&gt;a1num=(meanxy-(meanx*meany))
+  a1den=(meanxsq) - (meanx*meanx)
+  print(a1num)
+  print(a1den)
+  a1=a1num/a1den
+  a1
+
+-&gt;a0=meany-a1*meanx
+  a0
+
+-&gt;print(f' The regression equation is y = {a0} + {a1}x')
+
+###############################################################
+
+2)Least Square 
+
+a-&gt;import numpy as np
+b-&gt;x = np.array([2006, 2007, 2008, 2009, 2010])
+   y = np.array([40, 56, 78, 80, 40])
+c-&gt;y_sum = sum(y)
+   print ("Sum of y:",y_sum)
+d-&gt;x_median = 2008
+
+   print("x median:", x_median)
+
+   x_value = (x-x_median)
+   print (x_value)
+   x_sqr = sum(x_value**2)
+   print (x_sqr)
+
+e-&gt;xy = (x_value*y)
+   xy_sum = sum(x_value*y)
+   print(xy)
+
+   print(xy_sum)
+   n =len(x)
+   print (n)
+
+f-&gt;a = y_sum/n
+   print (a)
+   b = xy_sum/x_sqr
+   print(b)
+   for i in range(len(x_value)):
+       y_new = a + b * x_value[i]
+       print(y_new)
+g-&gt;print(x)
+   print(y)
+   print(xy)
+   print(x_value)
+   for i in range(len(x_value)):
+       y_new = a + b * x_value[i]
+       print(y_new)
+
+################################################################
+
+3)SVM
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+iris = datasets.load_iris()
+X = iris.data[:, :2] 
+y = iris.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+svm_clf = SVC(kernel='linear')
+svm_clf.fit(X_train, y_train)
+y_pred = svm_clf.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                     np.arange(y_min, y_max, 0.1))
+Z = svm_clf.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+
+plt.contourf(xx, yy, Z, alpha=0.4)
+plt.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor='k')
+plt.xlabel('Sepal length')
+plt.ylabel('Sepal width')
+plt.title('Support Vector Machine (SVM)')
+plt.show()
+
+##########################################################################################
+
+4)Logistic Regression
+
+-&gt;from sklearn import datasets
+  import numpy as np
+  from sklearn.linear_model import LogisticRegression
+  import matplotlib.pyplot as plt
+-&gt;iris = datasets.load_iris()
+-&gt;print(list(iris.keys()))
+-&gt;print(iris["data"])
+-&gt;print(iris['data'].shape)
+-&gt;x=iris["data"][:,3:]
+-&gt;print(x)
+-&gt;print(iris['target'])
+-&gt;print(iris["DESCR"])
+-&gt;y=(iris["target"]==2)
+-&gt;print(y.astype(np.int32))
+-&gt;clf=LogisticRegression()
+  clf.fit(x,y)
+-&gt;example=clf.predict(([[2.6]]))
+  example
+-&gt;X_new=np.linspace(0,3,1000).reshape(-1,1)
+  print(X_new)
+-&gt;Y_prob=clf.predict_proba(X_new)
+  Y_prob
+-&gt;plt.plot(X_new,Y_prob[:,1],"-g",label="Virginica")
+  plt.show()
+
+
+
+</span></code>
+
+</div>
+    </main>
+    <footer class="font-bold">
+    <div class="flex px-4 py-1 text-xs sm:text-base justify-between text-amber" style="background: #1a1a1a; font-family: JetbrainsMono">
+      <a href="https://kat.bio/">
+        © 2024 SphericalKat
+      </a>
+      <a href="https://github.com/sphericalkat/katbin">
+        Fork me!
+      </a>
+      </div>
+    </footer>
+  
+</body></html>
