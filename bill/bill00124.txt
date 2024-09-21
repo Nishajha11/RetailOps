@@ -1,0 +1,45 @@
+NSK Marketing
+123, Bhayander
+Pin Code - 123456
+Phone: 0123-456789
+Email: nskmarketing@gmail.com
+
+Customer Bill
+Customer Information
+Name: Mukesh Prajapat
+Address: Bhayander
+Phone: 0879653124
+
+Bill Details
+Invoice No.: 00124
+Date: 15-May-2023
+Salesperson: Sidharth Rao
+Items Purchased
+| No. | Item Description           | Quantity | Rate  | Total |
+|-----|----------------------------|----------|-------|-------|
+|  1  | Champion Kit               |    150   |   80  |  12000|
+|  2  |Miniz Plastic crayons       |    150   |   20  |   3000|
+|  3  | X1 Pencil                  |    150   |    5  |    750|
+|  4  | Art Strokes                |   1000   |  140  | 140000|
+
+Totals
+Subtotal: 155750
+Taxes (GST @ 18%): 328035
+Grand Total: 183785
+
+Payment Information
+Payment Method: Credit Card
+Transaction ID: 75378290
+
+
+
+Additional Information
+Warranty/Returns Policy: No returns or exchanges after 30 days.
+Customer Note: Thank you for shopping with us!
+
+
+
+
+
+Signature
+Authorized Signature

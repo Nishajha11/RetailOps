@@ -1,0 +1,45 @@
+NSK Marketing
+123, Bhayander
+Pin Code - 123456
+Phone: 0123-456789
+Email: nskmarketing@gmail.com
+
+Customer Bill
+Customer Information
+Name: Divyal Patil
+Address: Boisar
+Phone: 0987-654321
+
+Bill Details
+Invoice No.: 00123
+Date: 21-Apr-2024
+Salesperson: Sidharth Rao
+Items Purchased
+| No. | Item Description            | Quantity | Rate  | Total |
+|-----|-----------------------------|----------|-------|-------|
+|  1  | Drawing Pencil Set          |    35    |  60   |  2100 |
+|  2  | Wax Crayons Paper Tubes     |    13    | 25    |   325 |
+|  3  | Karbon Pencil               |    100   |  10   |  1000 |
+|  4  | Euro Eraser                 |   200    |   1   |   200 |
+
+Totals
+Subtotal: 3625
+Taxes (GST @ 18%): 653
+Grand Total: 4278
+
+Payment Information
+Payment Method: Credit Card
+Transaction ID: 456123789
+
+
+
+Additional Information
+Warranty/Returns Policy: No returns or exchanges after 30 days.
+Customer Note: Thank you for shopping with us!
+
+
+
+
+
+Signature
+Authorized Signature
