@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RetailOps · Inventory Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --paper:#FBFAF7; --ink:#16202C; --ink-soft:#5A6573; --line:#E7E3DA;
+    --card:#FFFFFF; --teal:#0E7C6B; --teal-soft:#E2F0EC; --amber:#C8761A;
+    --amber-soft:#FBEFDF; --violet:#5B4B8A; --violet-soft:#EEF0F6;
+    --loss:#B23A48; --loss-soft:#F8E7E8;
+    --shadow:0 1px 2px rgba(22,32,44,.06),0 8px 24px rgba(22,32,44,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+       font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.5}
+  .num{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+  header.app{padding:22px 28px 0;border-bottom:1px solid var(--line);
+         display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+  header.app h1{font-family:"Space Grotesk";font-weight:700;font-size:22px;margin:0;letter-spacing:-.01em}
+  header.app .tag{color:var(--ink-soft);font-size:13px}
+  header.app .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);
+              display:inline-block;margin-right:6px;vertical-align:middle}
+  /* nav */
+  nav.tabs{display:flex;gap:2px;flex-wrap:wrap;margin-top:16px;width:100%}
+  nav.tabs button{font:inherit;font-weight:600;font-size:13px;border:none;background:none;
+    color:var(--ink-soft);padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;
+    border-radius:0;letter-spacing:.01em}
+  nav.tabs button:hover{color:var(--ink)}
+  nav.tabs button.active{color:var(--ink);border-bottom-color:var(--teal)}
+  main{max-width:1240px;margin:0 auto;padding:24px 28px 64px}
+  .view{display:none} .view.active{display:block}
+  h2.section{font-family:"Space Grotesk";font-weight:700;font-size:19px;margin:0 0 4px;letter-spacing:-.01em}
+  p.lede{color:var(--ink-soft);margin:0 0 20px;max-width:60ch}
+  /* kpis */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:22px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+  .kpi .label{color:var(--ink-soft);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+  .kpi .value{font-family:"Space Grotesk";font-weight:700;font-size:24px;margin-top:6px;letter-spacing:-.02em}
+  .kpi .value.num{font-family:"JetBrains Mono"}
+  .kpi.good .value{color:var(--teal)} .kpi.bad .value{color:var(--loss)}
+  .kpi .sub{font-size:11px;color:var(--ink-soft);margin-top:3px}
+  /* grids & panels */
+  .grid{display:grid;grid-template-columns:1.4fr 1fr;gap:18px}
+  .grid.even{grid-template-columns:1fr 1fr}
+  @media(max-width:900px){.grid,.grid.even{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow);margin-bottom:18px}
+  .panel h3{font-family:"Space Grotesk";font-weight:600;font-size:15px;margin:0 0 14px;
+            display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .panel h3 small{color:var(--ink-soft);font-weight:500;font-size:12px}
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+     color:var(--ink-soft);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
+  td{padding:8px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle}
+  td.r,th.r{text-align:right}
+  tr:last-child td{border-bottom:none}
+  tbody tr.click{cursor:pointer} tbody tr.click:hover{background:var(--paper)}
+  .pill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px}
+  .pill.A{background:var(--teal-soft);color:var(--teal)}
+  .pill.B{background:var(--violet-soft);color:var(--violet)}
+  .pill.C{background:#F2F0EC;color:var(--ink-soft)}
+  .pill.alert{background:var(--amber-soft);color:var(--amber)}
+  .seg{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--violet-soft);color:var(--violet)}
+  .seg.Champion{background:var(--teal-soft);color:var(--teal)}
+  .seg.Atrisk{background:var(--loss-soft);color:var(--loss)}
+  .tag-cat{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#F2F0EC;color:var(--ink-soft)}
+  .muted{color:var(--ink-soft)}
+  canvas{max-width:100%}
+  .legend{display:flex;gap:16px;font-size:12px;color:var(--ink-soft);margin-top:8px;flex-wrap:wrap}
+  .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  .legend .hist::before{background:var(--ink)} .legend .fc::before{background:var(--amber)}
+  /* forms */
+  form.stack{display:grid;gap:10px}
+  .field{display:grid;gap:4px}
+  .field label{font-size:12px;color:var(--ink-soft);font-weight:600}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .row.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:600px){.row.cols{grid-template-columns:1fr}}
+  select,input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);width:100%}
+  input.qty{width:90px}
+  button{font:inherit;font-weight:600;border:none;border-radius:9px;padding:9px 16px;cursor:pointer}
+  button.primary{background:var(--ink);color:#fff} button.primary:hover{background:#0c161f}
+  button.ghost{background:#fff;border:1px solid var(--line);color:var(--ink)} button.ghost:hover{border-color:var(--ink-soft)}
+  button.tiny{padding:3px 9px;font-size:12px}
+  button.danger{color:var(--loss);background:#fff;border:1px solid var(--loss-soft)} button.danger:hover{background:var(--loss-soft)}
+  .bill-out{margin-top:10px;font-size:13px;border-top:1px dashed var(--line);padding-top:10px;min-height:20px}
+  .ok{color:var(--teal);font-weight:600} .err{color:var(--loss);font-weight:600}
+  .pl-flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin-top:4px}
+  .pl-step{flex:1;min-width:120px;padding:12px 14px;border:1px solid var(--line);border-right:none;background:var(--card)}
+  .pl-step:first-child{border-radius:12px 0 0 12px}
+  .pl-step:last-child{border-radius:0 12px 12px 0;border-right:1px solid var(--line)}
+  .pl-step .l{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft)}
+  .pl-step .v{font-family:"JetBrains Mono";font-weight:600;font-size:17px;margin-top:4px}
+  .pl-step.minus .v{color:var(--amber)} .pl-step.net.good .v{color:var(--teal)} .pl-step.net.bad .v{color:var(--loss)}
+  @media(max-width:760px){.pl-step{border-radius:12px!important;border-right:1px solid var(--line);margin-bottom:8px}}
+  .empty{padding:18px;text-align:center;color:var(--ink-soft);font-size:13px}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+  /* invoice (print) */
+  #invoiceModal{position:fixed;inset:0;background:rgba(22,32,44,.45);display:none;align-items:flex-start;justify-content:center;padding:30px 16px;overflow:auto;z-index:50}
+  #invoiceModal.show{display:flex}
+  .invoice{background:#fff;width:100%;max-width:620px;border-radius:14px;box-shadow:var(--shadow);padding:34px 36px}
+  .invoice .ihead{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:16px}
+  .invoice .ihead h2{font-family:"Space Grotesk";font-size:22px;margin:0;letter-spacing:-.01em}
+  .invoice .ihead .meta{text-align:right;font-size:12px;color:var(--ink-soft)}
+  .invoice .bill-to{font-size:13px;margin-bottom:14px}
+  .invoice table{margin-bottom:14px}
+  .invoice .totals{margin-left:auto;width:260px;font-size:13px}
+  .invoice .totals .l{display:flex;justify-content:space-between;padding:3px 0}
+  .invoice .totals .grand{border-top:2px solid var(--ink);margin-top:6px;padding-top:8px;font-weight:700;font-size:16px;font-family:"Space Grotesk"}
+  .invoice .foot{margin-top:22px;font-size:11px;color:var(--ink-soft);text-align:center;border-top:1px solid var(--line);padding-top:12px}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+  @media print{
+    body * {visibility:hidden}
+    #invoiceModal,#invoiceModal *{visibility:visible}
+    #invoiceModal{position:absolute;inset:0;background:#fff;padding:0;display:block}
+    .invoice{box-shadow:none;max-width:100%;border-radius:0}
+    .modal-actions{display:none}
+  }
+  /* ===== clarity / layout refinements ===== */
+  #view-dashboard .grid{grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:1000px){#view-dashboard .grid{grid-template-columns:1fr}}
+  #view-dashboard .panel{padding:20px 22px;margin-bottom:20px}
+  /* fixed-height chart frames so charts breathe and don't overlap labels */
+  .chart-wrap{position:relative;width:100%;height:300px}
+  .chart-wrap.tall{height:340px}
+  .chart-wrap canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
+  /* balanced, evenly-sized P&L boxes */
+  .pl-flow{gap:10px}
+  .pl-step{flex:1 1 0;min-width:150px;min-height:78px;border:1px solid var(--line)!important;
+           border-radius:12px!important;display:flex;flex-direction:column;justify-content:center}
+  .pl-step .v{font-size:18px}
+  /* period segmented control */
+  .seg-ctl{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .seg-ctl button{background:#fff;border:none;padding:6px 13px;font-weight:600;font-size:12px;
+                  color:var(--ink-soft);cursor:pointer;border-radius:0}
+  .seg-ctl button+button{border-left:1px solid var(--line)}
+  .seg-ctl button.active{background:var(--ink);color:#fff}
+  /* scope bar that sits with the charts */
+  .chart-scope{display:flex;align-items:center;justify-content:flex-end;gap:10px;
+               margin:2px 0 14px}
+  .chart-scope .lbl{margin-right:auto;font-size:12px;color:var(--ink-soft);font-weight:600;
+                    text-transform:uppercase;letter-spacing:.05em}
+  /* bills toolbar */
+  #billSearch{max-width:260px}
+  /* edit-mode banner on the bill form */
+  .edit-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--amber-soft);border:1px solid var(--amber);color:var(--amber);
+    border-radius:11px;padding:10px 14px;margin-bottom:16px;font-weight:600;font-size:13px}
+  .edit-banner button{padding:5px 12px;font-size:12px}
+  /* toast */
+  #toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+         background:var(--ink);color:#fff;padding:12px 20px;border-radius:11px;font-weight:600;
+         font-size:14px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:100;max-width:90vw}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #toast.bad{background:var(--loss)}
+</style>
+</head>
+<body>
+<header class="app">
+  <h1>RetailOps</h1>
+  <span class="tag"><span class="dot"></span>Inventory intelligence &amp; billing · live</span>
+  <span class="tag muted" id="span" style="margin-left:auto"></span>
+  <nav class="tabs" id="tabs">
+    <button data-view="dashboard" class="active">Dashboard</button>
+    <button data-view="billing">New bill</button>
+    <button data-view="bills">Bills</button>
+    <button data-view="products">Products</button>
+    <button data-view="customers">Customers</button>
+    <button data-view="categories">Categories</button>
+    <button data-view="expenses">Expenses</button>
+    <button data-view="settings">Settings</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ===================== DASHBOARD ===================== -->
+  <section class="view active" id="view-dashboard">
+    <h2 class="section">Operations overview</h2>
+    <p class="lede">Live KPIs, demand forecasting, profitability and inventory health — recomputed from the database on every sale.</p>
+
+    <div class="toolbar">
+      <span class="tag muted" id="liveStamp">Loading…</span>
+      <div class="row">
+        <button class="ghost" id="dlReport">Download report</button>
+        <button class="ghost" id="refreshNow">Refresh now</button>
+        <label class="row" style="gap:6px;font-size:12px;color:var(--ink-soft);margin:0">
+          <input type="checkbox" id="autoToggle" checked style="width:auto;margin:0"> Auto-refresh
+        </label>
+      </div>
+    </div>
+
+    <section class="kpis" id="kpis"></section>
+
+    <div class="panel">
+      <h3>Profit &amp; loss <small>revenue − cost of goods − operating expenses</small></h3>
+      <div class="pl-flow" id="plFlow"></div>
+    </div>
+
+    <div class="chart-scope">
+      <span class="lbl">Chart view</span>
+      <span class="seg-ctl" id="periodSel">
+        <button data-p="W" class="active">Weekly</button>
+        <button data-p="M">Monthly</button>
+        <button data-p="Y">Yearly</button>
+      </span>
+    </div>
+
+    <div class="panel">
+      <h3>Revenue trend <small id="revSub"></small></h3>
+      <div class="chart-wrap"><canvas id="revChart"></canvas></div>
+    </div>
+
+    <div class="panel">
+      <h3>Demand &amp; forecast <small id="fc-meta"></small></h3>
+      <div class="chart-wrap"><canvas id="fcChart"></canvas></div>
+      <div class="legend"><span class="hist">Actual units</span><span class="fc">Forecast</span></div>
+    </div>
+
+    <div class="panel">
+      <h3>ABC revenue concentration <small id="abcSub">top 15</small></h3>
+      <div class="chart-wrap tall"><canvas id="abcChart"></canvas></div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h3>Gross profit by product <small id="profitSub">top 10</small></h3>
+        <div class="chart-wrap"><canvas id="profitChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>Reorder alerts <small>demand-driven (Q,R) policy · current stock</small></h3>
+        <table><thead><tr><th>Product</th><th class="r">Stock</th><th class="r">Daily demand</th>
+          <th class="r">Reorder pt</th><th class="r">Days cover</th><th class="r">Order</th></tr></thead>
+          <tbody id="reorder"></tbody></table>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h3>Top sellers <small id="topSub">by units</small></h3>
+        <table><thead><tr><th>Product</th><th class="r">Units</th><th class="r">Revenue</th></tr></thead>
+          <tbody id="top"></tbody></table>
+      </div>
+      <div class="panel">
+        <h3>Slow movers <small id="bottomSub">watch for overstock</small></h3>
+        <table><thead><tr><th>Product</th><th class="r">Units</th><th class="r">Revenue</th></tr></thead>
+          <tbody id="bottom"></tbody></table>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h3>Customer segments <small id="custSub">RFM</small></h3>
+        <table><thead><tr><th>Customer</th><th class="r">Spend</th><th>Segment</th></tr></thead>
+          <tbody id="cust"></tbody></table>
+      </div>
+      <div class="panel">
+        <h3>Expense breakdown <small id="expSub">operating costs</small></h3>
+        <div class="chart-wrap"><canvas id="expChart"></canvas></div>
+        <div id="expEmpty" class="empty" style="display:none">No expenses logged yet. Add them in the Expenses tab to see net profit.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== NEW BILL ===================== -->
+  <section class="view" id="view-billing">
+    <h2 class="section" id="billHeading">Create a bill</h2>
+    <p class="lede" id="billLede">Add items, preview the total, then generate. Generating decrements live stock atomically and retrains the forecaster.</p>
+    <div id="editBanner" style="display:none"></div>
+    <div class="grid">
+      <div class="panel">
+        <h3>Items</h3>
+        <form class="stack" id="billForm">
+          <div class="field"><label>Customer</label><select id="custSel"></select></div>
+          <div class="row">
+            <select id="prodSel" style="flex:1;min-width:180px"></select>
+            <input class="qty num" id="qty" type="number" min="1" value="1" />
+            <button type="button" class="ghost" id="addItem">Add item</button>
+          </div>
+          <table><thead><tr><th>Product</th><th class="r">Qty</th><th class="r">Line</th><th></th></tr></thead><tbody id="cart"></tbody></table>
+          <div class="row cols">
+            <div class="field"><label>Discount %</label><input class="num" id="disc" type="number" value="0" min="0" max="100"/></div>
+            <div class="field"><label>Payment mode</label>
+              <select id="payMode"><option>Cash</option><option>UPI</option><option>Card</option><option>Bank</option><option>Credit</option></select></div>
+          </div>
+          <div class="field"><label>Amount received</label><input class="num" id="amtPaid" type="number" step="0.01" placeholder="blank = full amount"/></div>
+          <div class="row" style="justify-content:flex-end">
+            <button type="button" class="ghost" id="clearCart">Clear</button>
+            <button type="submit" class="primary" id="saveBillBtn">Generate &amp; save bill</button>
+          </div>
+          <div class="bill-out" id="billOut"></div>
+        </form>
+      </div>
+      <div class="panel">
+        <h3>Preview <small>updates as you edit</small></h3>
+        <div id="billPreview"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== BILLS ===================== -->
+  <section class="view" id="view-bills">
+    <h2 class="section">Saved bills</h2>
+    <p class="lede">Every invoice generated by the system. Click any row to preview and print.</p>
+    <div class="panel">
+      <div class="toolbar">
+        <h3 style="margin:0">All invoices <small id="billsCount"></small></h3>
+        <input id="billSearch" placeholder="Search invoice no, customer or status…" />
+      </div>
+      <table><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th class="r">Items</th><th class="r">Total</th><th>Status</th><th class="r">Paid</th><th class="r">Balance</th><th></th></tr></thead>
+        <tbody id="billsList"></tbody></table>
+    </div>
+  </section>
+
+  <!-- ===================== PRODUCTS ===================== -->
+  <section class="view" id="view-products">
+    <h2 class="section">Products</h2>
+    <p class="lede">Create new products and edit cost, price, stock and lead time. Margin updates automatically.</p>
+    <div class="grid">
+      <div class="panel">
+        <h3>Catalogue <small id="prodCount"></small></h3>
+        <table><thead><tr><th>Name</th><th>Category</th><th class="r">Cost</th><th class="r">MRP</th><th class="r">GST</th><th class="r">Margin</th><th class="r">Stock</th><th></th></tr></thead>
+          <tbody id="prodList"></tbody></table>
+      </div>
+      <div class="panel">
+        <h3 id="prodFormTitle">New product</h3>
+        <form class="stack" id="prodForm">
+          <input type="hidden" id="prodId" />
+          <div class="field"><label>Name</label><input id="pName" required /></div>
+          <div class="field"><label>Category</label><select id="pCat"></select></div>
+          <div class="row cols">
+            <div class="field"><label>Cost (rate)</label><input class="num" id="pCost" type="number" step="0.01" value="0"/></div>
+            <div class="field"><label>MRP (sell)</label><input class="num" id="pMrp" type="number" step="0.01" value="0"/></div>
+          </div>
+          <div class="row cols">
+            <div class="field"><label>Stock</label><input class="num" id="pStock" type="number" value="0"/></div>
+            <div class="field"><label>Lead time (days)</label><input class="num" id="pLead" type="number" value="7"/></div>
+          </div>
+          <div class="row cols">
+            <div class="field"><label>HSN / SAC code</label><input id="pHsn" placeholder="e.g. 9608"/></div>
+            <div class="field"><label>GST rate %</label><input class="num" id="pGst" type="number" step="0.01" value="0"/></div>
+          </div>
+          <div class="row" style="justify-content:flex-end">
+            <button type="button" class="ghost" id="pReset">Reset</button>
+            <button type="submit" class="primary" id="pSave">Save product</button>
+          </div>
+          <div class="bill-out" id="prodOut"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CUSTOMERS ===================== -->
+  <section class="view" id="view-customers">
+    <h2 class="section">Customers</h2>
+    <p class="lede">Maintain your customer directory. New customers become available in the billing form immediately.</p>
+    <div class="grid">
+      <div class="panel">
+        <h3>Directory <small id="custCount"></small></h3>
+        <table><thead><tr><th>Name</th><th>Phone</th><th>GSTIN</th><th></th></tr></thead>
+          <tbody id="custList"></tbody></table>
+      </div>
+      <div class="panel">
+        <h3 id="custFormTitle">New customer</h3>
+        <form class="stack" id="custForm">
+          <input type="hidden" id="custId" />
+          <div class="field"><label>Name</label><input id="cName" required /></div>
+          <div class="field"><label>Address</label><input id="cAddr" /></div>
+          <div class="row cols">
+            <div class="field"><label>Phone</label><input id="cPhone" /></div>
+            <div class="field"><label>Email</label><input id="cEmail" type="email" /></div>
+          </div>
+          <div class="field"><label>GSTIN</label><input id="cGstin" placeholder="customer GST number (optional)" /></div>
+          <div class="row" style="justify-content:flex-end">
+            <button type="button" class="ghost" id="cReset">Reset</button>
+            <button type="submit" class="primary">Save customer</button>
+          </div>
+          <div class="bill-out" id="custOut"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CATEGORIES ===================== -->
+  <section class="view" id="view-categories">
+    <h2 class="section">Categories</h2>
+    <p class="lede">Group products into categories. Counts show how many products sit in each.</p>
+    <div class="grid">
+      <div class="panel">
+        <h3>All categories <small id="catCount"></small></h3>
+        <table><thead><tr><th>Name</th><th class="r">Products</th><th></th></tr></thead>
+          <tbody id="catList"></tbody></table>
+      </div>
+      <div class="panel">
+        <h3>New category</h3>
+        <form class="stack" id="catForm">
+          <div class="field"><label>Name</label><input id="catName" required /></div>
+          <div class="row" style="justify-content:flex-end">
+            <button type="submit" class="primary">Add category</button>
+          </div>
+          <div class="bill-out" id="catOut"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== EXPENSES ===================== -->
+  <section class="view" id="view-expenses">
+    <h2 class="section">Operating expenses</h2>
+    <p class="lede">Record money spent outside of stock — delivery, salaries, electricity, rent. These are subtracted from gross profit to give net profit on the dashboard.</p>
+    <div class="kpis" id="expKpis"></div>
+    <div class="grid">
+      <div class="panel">
+        <h3>Logged expenses <small id="expCount"></small></h3>
+        <table><thead><tr><th>Date</th><th>Category</th><th>Payee</th><th>Description</th><th class="r">Amount</th><th></th></tr></thead>
+          <tbody id="expList"></tbody></table>
+      </div>
+      <div class="panel">
+        <h3>Record an expense</h3>
+        <form class="stack" id="expForm">
+          <div class="field"><label>Category</label>
+            <select id="eCat">
+              <option>Delivery</option><option>Salary</option><option>Utilities</option>
+              <option>Rent</option><option>Other</option>
+            </select></div>
+          <div class="field"><label>Payee</label><input id="ePayee" placeholder="e.g. courier, electricity board, worker"/></div>
+          <div class="field"><label>Description</label><input id="eDesc" /></div>
+          <div class="field"><label>Amount</label><input class="num" id="eAmount" type="number" step="0.01" min="0.01" required/></div>
+          <div class="row" style="justify-content:flex-end">
+            <button type="submit" class="primary">Save expense</button>
+          </div>
+          <div class="bill-out" id="expOut"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SETTINGS ===================== -->
+  <section class="view" id="view-settings">
+    <h2 class="section">Business profile</h2>
+    <p class="lede">Your shop's details appear on every printed tax invoice. Add your GSTIN to issue GST-compliant bills.</p>
+    <div class="grid">
+      <div class="panel">
+        <h3>Shop details</h3>
+        <form class="stack" id="profForm">
+          <div class="field"><label>Business name</label><input id="bName" /></div>
+          <div class="field"><label>Address</label><input id="bAddr" /></div>
+          <div class="row cols">
+            <div class="field"><label>Phone</label><input id="bPhone" /></div>
+            <div class="field"><label>Email</label><input id="bEmail" type="email" /></div>
+          </div>
+          <div class="row cols">
+            <div class="field"><label>GSTIN</label><input id="bGstin" placeholder="e.g. 27ABCDE1234F1Z5" /></div>
+            <div class="field"><label>State</label><input id="bState" /></div>
+          </div>
+          <div class="row" style="justify-content:flex-end">
+            <button type="submit" class="primary">Save profile</button>
+          </div>
+          <div class="bill-out" id="profOut"></div>
+        </form>
+      </div>
+      <div class="panel">
+        <h3>GST collected <small>output tax</small></h3>
+        <div id="gstBox"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- invoice modal -->
+<div id="invoiceModal"><div class="invoice" id="invoiceBody"></div></div>
+<div id="toast"></div>
+
+<script>
+const API = "";
+const money = v => "₹" + Number(v||0).toLocaleString("en-IN",{maximumFractionDigits:0});
+const money2 = v => "₹" + Number(v||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+const get = p => fetch(API+p).then(r=>r.json());
+const fmtDate = s => new Date(s).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+let state = { products:[], customers:[], cart:[], profile:{} };
+let fcChart, abcChart, profitChart, expChart, revChart;
+let period = "W";
+const GRAN = {W:"weekly", M:"monthly", Y:"yearly"};
+const WIN  = {W:"last 7 days", M:"last 30 days", Y:"last 12 months"};
+
+function toast(msg, kind){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.className=(kind==="bad"?"bad ":"")+"show";
+  clearTimeout(t._t); t._t=setTimeout(()=>{t.className=t.className.replace("show","").trim();},2800);
+}
+
+/* ---------- navigation ---------- */
+const loaders = {
+  dashboard: loadDashboard, billing: loadBilling, bills: loadBills,
+  products: loadProducts, customers: loadCustomers, categories: loadCategories,
+  expenses: loadExpenses, settings: loadSettings,
+};
+function show(view){
+  currentView = view;
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id==="view-"+view));
+  const done = loaders[view] ? loaders[view]() : Promise.resolve();
+  Promise.resolve(done).then(()=>{ if(LIVE_VIEWS.has(view)) stampUpdated(); });
+  window.scrollTo(0,0);
+}
+document.getElementById("tabs").addEventListener("click",e=>{
+  if(e.target.dataset.view) show(e.target.dataset.view);
+});
+
+/* ---------- real-time auto-refresh ---------- */
+let currentView = "dashboard";
+const LIVE_VIEWS = new Set(["dashboard","bills"]);   // read-only views safe to auto-refresh
+const AUTO_MS = 15000;
+let autoOn = true, autoTimer = null;
+
+function stampUpdated(){
+  const el = document.getElementById("liveStamp");
+  if(!el) return;
+  const t = new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  el.innerHTML = `<span class="dot"></span>Live · updated ${t}`;
+}
+async function autoTick(){
+  if(!autoOn || document.hidden) return;
+  if(document.getElementById("invoiceModal").classList.contains("show")) return; // don't disrupt printing
+  if(!LIVE_VIEWS.has(currentView)) return;
+  try{ await loaders[currentView](); stampUpdated(); }catch(_){}
+}
+function startAuto(){ if(autoTimer) clearInterval(autoTimer); autoTimer = setInterval(autoTick, AUTO_MS); }
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) autoTick(); });
+document.getElementById("autoToggle").onchange = e=>{ autoOn = e.target.checked; stampUpdated(); };
+document.getElementById("refreshNow").onclick = ()=>{
+  if(!loaders[currentView]) return;
+  Promise.resolve(loaders[currentView]()).then(()=>{ if(LIVE_VIEWS.has(currentView)) stampUpdated(); });
+};
+document.getElementById("dlReport").onclick = async ()=>{
+  const btn = document.getElementById("dlReport"); const old = btn.textContent;
+  btn.textContent = "Preparing…"; btn.disabled = true;
+  try{
+    const r = await get("/api/analytics/report");
+    const blob = new Blob([r.markdown], {type:"text/markdown"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "analysis_report.md";
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+  } finally { btn.textContent = old; btn.disabled = false; }
+};
+
+/* ---------- shared refs ---------- */
+async function refreshShared(){
+  const [prods, custs, prof] = await Promise.all([
+    get("/api/products"), get("/api/customers"), get("/api/profile")]);
+  state.products = prods; state.customers = custs; state.profile = prof||{};
+}
+
+/* ===================== DASHBOARD ===================== */
+async function loadDashboard(){
+  const [k, pl, rec, gst] = await Promise.all([
+    get("/api/analytics/kpis"), get("/api/analytics/profit-loss"),
+    get("/api/analytics/receivables"), get("/api/analytics/gst")]);
+  document.getElementById("span").textContent = k.history_days + " days of history";
+  const cards = [
+    ["Revenue", money(pl.revenue), ""],
+    ["Gross profit", money(pl.gross_profit), pl.gross_margin_pct+"% margin", "good"],
+    ["Net profit", money(pl.net_profit), pl.net_margin_pct+"% margin", pl.is_profit?"good":"bad"],
+    ["To collect", money(rec.total_to_collect), rec.open_invoices+" open bill"+(rec.open_invoices===1?"":"s"), rec.total_to_collect>0?"bad":"good"],
+    ["GST collected", money(gst.total_gst), "CGST "+money(gst.cgst)+" · SGST "+money(gst.sgst)],
+    ["Operating expenses", money(pl.total_expenses), ""],
+    ["Units sold", Number(k.units_sold).toLocaleString(), ""],
+    ["Avg order value", money(k.avg_order_value), ""],
+    ["Inventory at cost", money(k.inventory_value_at_cost), ""],
+    ["Low-stock items", k.low_stock_count, k.low_stock_count?"needs reorder":"all healthy", k.low_stock_count?"bad":"good"],
+  ];
+  document.getElementById("kpis").innerHTML = cards.map(([l,v,s,cls])=>
+    `<div class="kpi ${cls||""}"><div class="label">${l}</div><div class="value num">${v}</div>${s?`<div class="sub">${s}</div>`:""}</div>`).join("");
+
+  // P&L flow
+  const netCls = pl.is_profit ? "good" : "bad";
+  document.getElementById("plFlow").innerHTML = `
+    <div class="pl-step"><div class="l">Revenue</div><div class="v">${money(pl.revenue)}</div></div>
+    <div class="pl-step minus"><div class="l">− Cost of goods</div><div class="v">${money(pl.cogs)}</div></div>
+    <div class="pl-step"><div class="l">= Gross profit</div><div class="v">${money(pl.gross_profit)}</div></div>
+    <div class="pl-step minus"><div class="l">− Expenses</div><div class="v">${money(pl.total_expenses)}</div></div>
+    <div class="pl-step net ${netCls}"><div class="l">= Net ${pl.is_profit?"profit":"loss"}</div><div class="v">${money(pl.net_profit)}</div></div>`;
+
+  await Promise.all([loadRevenue(), loadForecast(), loadABC(), loadProfitChart(), loadExpenseChart(), loadDashTables()]);
+}
+
+async function loadRevenue(){
+  const data = await get("/api/analytics/revenue-series?freq="+period);
+  const sub=document.getElementById("revSub"); if(sub) sub.textContent="grouped "+GRAN[period];
+  if(revChart) revChart.destroy();
+  revChart = new Chart(document.getElementById("revChart"),{
+    type:"line",
+    data:{labels:data.map(r=>r.label||r.period),
+      datasets:[{label:"Revenue",data:data.map(r=>r.revenue),
+        borderColor:"#0E7C6B",backgroundColor:"rgba(14,124,107,.12)",
+        fill:true,tension:.25,pointRadius:data.length>40?0:3,borderWidth:2}]},
+    options:{maintainAspectRatio:false,responsive:true,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>money(c.raw)}}},
+      scales:{x:{ticks:{maxTicksLimit:13,font:{size:10},autoSkip:true}},
+        y:{beginAtZero:true,ticks:{font:{size:10},
+          callback:v=>"₹"+(v>=1000?(v/1000).toFixed(0)+"k":v)}}}}
+  });
+}
+document.getElementById("periodSel").addEventListener("click",e=>{
+  const p=e.target.dataset.p; if(!p||p===period)return;
+  period=p;
+  document.querySelectorAll("#periodSel button").forEach(b=>b.classList.toggle("active",b.dataset.p===p));
+  // only the time-series charts change granularity; the rest are all-time
+  Promise.all([loadRevenue(), loadForecast()]).then(stampUpdated);
+});
+
+async function loadForecast(){
+  const f = await get("/api/forecast?horizon=4&freq="+period);
+  const m = f.metrics||{};
+  const NAME = {trend_seasonal:"trend + seasonal", seasonal_naive:"seasonal", persistence:"flat (baseline)"};
+  const mae = m.model_mae==null ? "–" : m.model_mae;
+  const sn  = m.seasonal_naive_mae==null ? "–" : m.seasonal_naive_mae;
+  const conf = m.confidence==="low" ? " · low confidence (short history)" : "";
+  document.getElementById("fc-meta").textContent =
+    `${GRAN[period]} · ${NAME[m.selected]||m.selected} · MAE ${mae} vs seasonal-naive ${sn}${conf}`;
+  const labels = f.series.map(p=>p.label||p.period);
+  const hist = f.series.map(p=>p.kind==="history"?p.predicted_units:null);
+  const fc = f.series.map(p=>p.kind==="forecast"?p.predicted_units:null);
+  const lastH = f.series.map(p=>p.kind).lastIndexOf("history");
+  if(lastH>=0) fc[lastH]=f.series[lastH].predicted_units;
+  if(fcChart) fcChart.destroy();
+  fcChart = new Chart(document.getElementById("fcChart"),{
+    type:"line",
+    data:{labels,datasets:[
+      {label:"Actual",data:hist,borderColor:"#16202C",backgroundColor:"#16202C",tension:.25,spanGaps:false,pointRadius:2},
+      {label:"Forecast",data:fc,borderColor:"#C8761A",borderDash:[5,4],backgroundColor:"#C8761A",tension:.25,pointRadius:2}
+    ]},
+    options:{maintainAspectRatio:false,responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:8,font:{size:10}}},y:{beginAtZero:true}}}
+  });
+}
+
+async function loadABC(){
+  const a = (await get("/api/analytics/abc")).slice(0,15);
+  const sub=document.getElementById("abcSub"); if(sub) sub.textContent="top 15 · all-time revenue share";
+  const colors={A:"#0E7C6B",B:"#5B4B8A",C:"#B7AE9E"};
+  if(abcChart) abcChart.destroy();
+  abcChart = new Chart(document.getElementById("abcChart"),{
+    type:"bar",
+    data:{labels:a.map(r=>r.product_name),datasets:[{data:a.map(r=>r.revenue),backgroundColor:a.map(r=>colors[r.class])}]},
+    options:{maintainAspectRatio:false,responsive:true,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${money(c.raw)} · class ${a[c.dataIndex].class}`}}},
+      scales:{x:{ticks:{font:{size:9},maxRotation:60,minRotation:45,autoSkip:false}},y:{beginAtZero:true,ticks:{font:{size:10}}}}}
+  });
+}
+
+async function loadProfitChart(){
+  const pp = (await get("/api/analytics/product-profit")).filter(r=>r.units_sold>0).slice(0,10);
+  const sub=document.getElementById("profitSub"); if(sub) sub.textContent="top 10 · all-time · revenue − COGS";
+  if(profitChart) profitChart.destroy();
+  profitChart = new Chart(document.getElementById("profitChart"),{
+    type:"bar",
+    data:{labels:pp.map(r=>r.product_name),datasets:[{data:pp.map(r=>r.profit),
+      backgroundColor:pp.map(r=>r.profit>=0?"#0E7C6B":"#B23A48")}]},
+    options:{indexAxis:"y",maintainAspectRatio:false,responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{
+      label:c=>`${money(c.raw)} profit · ${pp[c.dataIndex].margin_pct}% margin`}}},
+      scales:{x:{beginAtZero:true,ticks:{font:{size:10}}},y:{ticks:{font:{size:10}}}}}
+  });
+}
+
+async function loadExpenseChart(){
+  const pl = await get("/api/analytics/profit-loss");
+  const eb = pl.expense_breakdown || [];
+  const sub=document.getElementById("expSub"); if(sub) sub.textContent="operating costs · all-time";
+  const empty = document.getElementById("expEmpty");
+  if(expChart) expChart.destroy();
+  if(!eb.length){ empty.style.display="block"; document.getElementById("expChart").style.display="none"; return; }
+  empty.style.display="none"; document.getElementById("expChart").style.display="block";
+  const palette=["#0E7C6B","#C8761A","#5B4B8A","#B23A48","#B7AE9E"];
+  expChart = new Chart(document.getElementById("expChart"),{
+    type:"doughnut",
+    data:{labels:eb.map(r=>r.category),datasets:[{data:eb.map(r=>r.amount),
+      backgroundColor:eb.map((_,i)=>palette[i%palette.length])}]},
+    options:{maintainAspectRatio:false,responsive:true,plugins:{legend:{position:"right",labels:{font:{size:11},boxWidth:12}},
+      tooltip:{callbacks:{label:c=>`${c.label}: ${money(c.raw)}`}}}}
+  });
+}
+
+async function loadDashTables(){
+  const [top,bottom,reorder,cust] = await Promise.all([
+    get("/api/analytics/top-sellers?n=5"), get("/api/analytics/bottom-sellers?n=5"),
+    get("/api/analytics/reorder"), get("/api/analytics/customers"),
+  ]);
+  ["topSub","bottomSub","custSub"].forEach((id,i)=>{const e=document.getElementById(id);
+    if(e) e.textContent=["by units · all-time","watch for overstock · all-time","RFM · all-time"][i];});
+  document.getElementById("top").innerHTML = top.map(r=>
+    `<tr><td>${esc(r.product_name)}</td><td class="r num">${r.units_sold}</td><td class="r num">${money(r.revenue)}</td></tr>`).join("");
+  document.getElementById("bottom").innerHTML = bottom.map(r=>
+    `<tr><td>${esc(r.product_name)}</td><td class="r num">${r.units_sold}</td><td class="r num">${money(r.revenue)}</td></tr>`).join("");
+  const ro = reorder.slice(0,8);
+  document.getElementById("reorder").innerHTML = ro.map(r=>
+    `<tr><td>${r.alert?'<span class="pill alert">!</span> ':''}${esc(r.product_name)}</td>
+      <td class="r num">${r.stock}</td><td class="r num">${r.avg_daily_demand}</td>
+      <td class="r num">${r.reorder_point}</td><td class="r num">${r.days_of_cover??'∞'}</td>
+      <td class="r num">${r.suggested_order_qty||'—'}</td></tr>`).join("")
+    || `<tr><td colspan="6" class="empty">No products.</td></tr>`;
+  document.getElementById("cust").innerHTML = cust.slice(0,6).map(r=>
+    `<tr><td>${esc(r.customer_name)}</td><td class="r num">${money(r.monetary)}</td>
+      <td><span class="seg ${r.segment.replace(/ /g,'')}">${r.segment}</span></td></tr>`).join("");
+}
+
+/* ===================== BILLING ===================== */
+let editingInvoiceId = null, editingInvoiceNo = "", pendingEditInv = null;
+
+async function loadBilling(){
+  await refreshShared();
+  document.getElementById("prodSel").innerHTML = state.products.map(p=>
+    `<option value="${p.id}">${esc(p.name)} — ${money(p.mrp)} (stock ${p.stock})</option>`).join("");
+  document.getElementById("custSel").innerHTML =
+    `<option value="">Walk-in customer</option>` +
+    state.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  if(pendingEditInv){                       // prefill the form from a bill being edited
+    const inv = pendingEditInv; pendingEditInv = null;
+    state.cart = (inv.lines||[]).map(l=>({product_id:l.product_id, qty:l.qty}));
+    document.getElementById("custSel").value = inv.customer_id || "";
+    document.getElementById("disc").value = inv.discount_pct || 0;
+    document.getElementById("payMode").value = inv.payment_mode || "Cash";
+    document.getElementById("amtPaid").value = (inv.amount_paid!=null ? inv.amount_paid : "");
+  }
+  updateBillFormMode();
+  renderCart();
+}
+
+function updateBillFormMode(){
+  const editing = editingInvoiceId !== null;
+  const banner = document.getElementById("editBanner");
+  document.getElementById("billHeading").textContent = editing ? "Edit bill "+editingInvoiceNo : "Create a bill";
+  document.getElementById("saveBillBtn").textContent = editing ? "Update bill" : "Generate & save bill";
+  if(editing){
+    banner.className = "edit-banner";
+    banner.innerHTML = `Editing ${esc(editingInvoiceNo)} — changes re-price the bill and adjust stock.
+      <button type="button" class="ghost" id="cancelEdit">Cancel edit</button>`;
+    banner.style.display = "flex";
+    document.getElementById("cancelEdit").onclick = exitEditMode;
+  } else {
+    banner.style.display = "none"; banner.innerHTML = "";
+  }
+}
+function exitEditMode(){
+  editingInvoiceId = null; editingInvoiceNo = ""; pendingEditInv = null;
+  state.cart = []; document.getElementById("amtPaid").value = "";
+  document.getElementById("disc").value = 0;
+  updateBillFormMode(); renderCart();
+}
+async function editBill(id){
+  pendingEditInv = await get("/api/billing/"+id);
+  editingInvoiceId = pendingEditInv.invoice_id;
+  editingInvoiceNo = pendingEditInv.invoice_no || ("#"+pendingEditInv.invoice_id);
+  show("billing");                          // loadBilling() then applies pendingEditInv
+}
+function renderCart(){
+  document.getElementById("cart").innerHTML = state.cart.map((it,i)=>{
+    const p = state.products.find(x=>x.id===it.product_id) || {name:"?",mrp:0};
+    return `<tr><td>${esc(p.name)}</td><td class="r num">×${it.qty}</td>
+      <td class="r num">${money(p.mrp*it.qty)}</td>
+      <td class="r"><button type="button" class="ghost tiny" data-i="${i}">✕</button></td></tr>`;
+  }).join("") || `<tr><td colspan="4" class="empty">No items yet.</td></tr>`;
+  document.querySelectorAll("#cart button").forEach(b=>
+    b.onclick=()=>{state.cart.splice(+b.dataset.i,1);renderCart();renderPreview();});
+  renderPreview();
+}
+function billTotals(){
+  const disc=+document.getElementById("disc").value||0;
+  const factor=1-disc/100;
+  let sub=0, gst=0;
+  state.cart.forEach(it=>{
+    const p=state.products.find(x=>x.id===it.product_id); if(!p)return;
+    const line=p.mrp*it.qty; sub+=line;
+    gst += line*factor*(+p.gst_rate||0)/100;
+  });
+  const taxable=sub*factor, total=taxable+gst;
+  return {disc,sub,taxable,gst,total};
+}
+function renderPreview(){
+  const t=billTotals();
+  const cid=document.getElementById("custSel")?.value;
+  const cust=state.customers.find(c=>String(c.id)===String(cid));
+  const mode=document.getElementById("payMode")?.value||"Cash";
+  const amtRaw=document.getElementById("amtPaid")?.value;
+  const paid = amtRaw==="" ? (mode==="Credit"?0:t.total) : Math.max(0,Math.min(+amtRaw,t.total));
+  const bal=t.total-paid;
+  document.getElementById("billPreview").innerHTML = !state.cart.length
+    ? `<div class="empty">Add items to see the preview.</div>`
+    : `<div class="bill-to"><strong>${cust?esc(cust.name):"Walk-in customer"}</strong>${cust&&cust.phone?` · ${esc(cust.phone)}`:""}</div>
+       <table><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">GST</th><th class="r">Amount</th></tr></thead><tbody>
+       ${state.cart.map(it=>{const p=state.products.find(x=>x.id===it.product_id);return `<tr><td>${esc(p.name)}</td><td class="r num">${it.qty}</td><td class="r num">${money2(p.mrp)}</td><td class="r num">${(+p.gst_rate||0)}%</td><td class="r num">${money2(p.mrp*it.qty)}</td></tr>`}).join("")}
+       </tbody></table>
+       <div class="invoice"><div class="totals">
+         <div class="l"><span>Subtotal</span><span class="num">${money2(t.sub)}</span></div>
+         <div class="l"><span>Discount ${t.disc}%</span><span class="num">−${money2(t.sub-t.taxable)}</span></div>
+         <div class="l"><span>Taxable value</span><span class="num">${money2(t.taxable)}</span></div>
+         <div class="l"><span>CGST</span><span class="num">${money2(t.gst/2)}</span></div>
+         <div class="l"><span>SGST</span><span class="num">${money2(t.gst/2)}</span></div>
+         <div class="l grand"><span>Total</span><span class="num">${money2(t.total)}</span></div>
+         <div class="l"><span>Paid (${esc(mode)})</span><span class="num">${money2(paid)}</span></div>
+         <div class="l"><span>Balance due</span><span class="num" style="color:${bal>0.005?'var(--loss)':'var(--teal)'}">${money2(bal)}</span></div>
+       </div></div>`;
+}
+document.getElementById("addItem").onclick = ()=>{
+  const pid=+document.getElementById("prodSel").value, qty=+document.getElementById("qty").value;
+  if(pid&&qty>0){
+    const ex=state.cart.find(i=>i.product_id===pid);
+    if(ex) ex.qty+=qty; else state.cart.push({product_id:pid,qty});
+    renderCart();
+  }
+};
+document.getElementById("clearCart").onclick=()=>{state.cart=[];renderCart();};
+["disc","custSel","payMode","amtPaid"].forEach(id=>document.addEventListener("input",e=>{if(e.target.id===id)renderPreview();}));
+document.addEventListener("change",e=>{if(e.target.id==="payMode")renderPreview();});
+let lastBillSig = null, lastBillNo = "";
+function billSignature(body){
+  // a stable fingerprint of the bill's contents, to catch accidental re-saves
+  const items = [...body.items].map(i=>`${i.product_id}x${i.qty}`).sort().join(",");
+  return `${body.customer_id||"walk"}|${items}|d${body.discount_pct}|${body.payment_mode}|p${body.amount_paid}`;
+}
+document.getElementById("billForm").onsubmit = async e=>{
+  e.preventDefault();
+  const out=document.getElementById("billOut");
+  const btn=document.getElementById("saveBillBtn");
+  if(btn.disabled) return;                                  // already submitting
+  if(!state.cart.length){out.innerHTML='<span class="err">Add at least one item.</span>';return;}
+  const amtRaw=document.getElementById("amtPaid").value;
+  const body={customer_id:document.getElementById("custSel").value||null,items:state.cart.map(i=>({...i})),
+    discount_pct:+document.getElementById("disc").value,
+    payment_mode:document.getElementById("payMode").value,
+    amount_paid: amtRaw===""?null:+amtRaw};
+
+  // duplicate-bill guard: same contents as the bill we just saved (create only)
+  const sig=billSignature(body);
+  if(editingInvoiceId===null && sig===lastBillSig){
+    if(!confirm(`This looks identical to the bill you just saved (${lastBillNo}).\nGenerate another copy?`)){
+      out.innerHTML='<span class="err">Cancelled — duplicate of '+esc(lastBillNo)+'.</span>';
+      return;
+    }
+  }
+
+  const label=btn.textContent;
+  btn.disabled=true; btn.textContent=editingInvoiceId!==null?"Updating…":"Saving…";
+  out.innerHTML='<span class="muted">'+(editingInvoiceId!==null?"Updating bill…":"Saving bill…")+'</span>';
+  try{
+    const editing = editingInvoiceId !== null;
+    const url = editing ? API+"/api/billing/"+editingInvoiceId : API+"/api/billing";
+    const res=await fetch(url,{method:editing?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const j=await res.json();
+    if(!res.ok){out.innerHTML=`<span class="err">${esc(j.detail||"Could not save bill")}</span>`;return;}
+    if(editing){
+      const no=j.invoice_no||editingInvoiceNo;
+      exitEditMode();
+      toast("✓ Bill "+no+" updated · "+money(j.total));
+      out.innerHTML=`<span class="ok">${esc(no)} updated · ${money(j.total)} (${esc(j.status)}).</span> Opening print view…`;
+      await refreshShared(); await loadBilling();
+      openInvoice(j);
+      return;
+    }
+    lastBillSig=sig; lastBillNo=j.invoice_no||("#"+j.invoice_id);
+    out.innerHTML=`<span class="ok">${esc(j.invoice_no)} saved · ${money(j.total)} (${esc(j.status)}).</span> Opening print view…`;
+    toast("✓ Bill "+(j.invoice_no||"")+" saved · "+money(j.total));
+    state.cart=[];document.getElementById("amtPaid").value="";renderCart();
+    await refreshShared();await loadBilling();
+    openInvoice(j);
+  }catch(err){
+    out.innerHTML='<span class="err">Network error — bill was not saved. Please retry.</span>';
+  }finally{
+    btn.disabled=false; btn.textContent=label;
+  }
+};
+
+/* ===================== BILLS ===================== */
+function statusPill(s){
+  const cls = s==="Paid"?"A":(s==="Unpaid"?"alert":"B");
+  return `<span class="pill ${cls}">${esc(s)}</span>`;
+}
+let allBills = [];
+function renderBills(){
+  const q = (document.getElementById("billSearch")?.value||"").trim().toLowerCase();
+  const rows = q ? allBills.filter(b=>
+        (b.invoice_no||("#"+b.invoice_id)).toLowerCase().includes(q) ||
+        (b.customer_name||"").toLowerCase().includes(q) ||
+        (b.status||"").toLowerCase().includes(q)) : allBills;
+  document.getElementById("billsCount").textContent =
+    q ? `${rows.length} of ${allBills.length}` : `${allBills.length} total`;
+  document.getElementById("billsList").innerHTML = rows.length ? rows.map(b=>
+    `<tr class="click" data-id="${b.invoice_id}">
+      <td class="num">${esc(b.invoice_no||('#'+b.invoice_id))}</td><td>${fmtDate(b.created_at)}</td>
+      <td>${esc(b.customer_name)}</td><td class="r num">${b.item_count}</td>
+      <td class="r num">${money(b.total)}</td><td>${statusPill(b.status||"Paid")}</td>
+      <td class="r num">${money(b.amount_paid)}</td>
+      <td class="r num">${b.balance_due>0.005?money(b.balance_due):'—'}</td>
+      <td class="r"><button class="ghost tiny" data-open="${b.invoice_id}">View / print</button>
+      <button class="ghost tiny" data-edit="${b.invoice_id}">Edit</button>
+      <button class="danger tiny" data-void="${b.invoice_id}">Void</button></td></tr>`).join("")
+    : `<tr><td colspan="9" class="empty">${allBills.length?"No bills match your search.":"No bills yet. Create one in the New bill tab."}</td></tr>`;
+}
+async function loadBills(){
+  allBills = await get("/api/billing");          // every invoice in the database
+  renderBills();
+}
+// one delegated handler for the whole (potentially large) list
+(function(){
+  const list=document.getElementById("billsList");
+  const search=document.getElementById("billSearch");
+  if(search) search.addEventListener("input", renderBills);
+  if(!list) return;
+  list.addEventListener("click", async e=>{
+    const voidBtn=e.target.closest("[data-void]");
+    if(voidBtn){
+      e.stopPropagation();
+      if(!confirm("Void this bill? Its stock will be returned to inventory and the sale removed."))return;
+      const r=await fetch(API+"/api/billing/"+voidBtn.dataset.void,{method:"DELETE"});
+      const j=await r.json();
+      if(!r.ok){alert(j.detail||"Could not void bill");return;}
+      toast("Bill voided · "+(j.units_restored||0)+" units restored");
+      await refreshShared();await loadBills();
+      return;
+    }
+    const editBtn=e.target.closest("[data-edit]");
+    if(editBtn){ e.stopPropagation(); editBill(editBtn.dataset.edit); return; }
+    const row=e.target.closest("[data-id]");
+    if(row){ const inv=await get("/api/billing/"+row.dataset.id); openInvoice(inv); }
+  });
+})();
+
+/* ---------- invoice modal (GST tax invoice) ---------- */
+function openInvoice(inv){
+  const cust = state.customers.find(c=>String(c.id)===String(inv.customer_id));
+  const b = state.profile||{};
+  const hasGst = (inv.tax_total||0) > 0.005;
+  const title = (b.gstin||hasGst) ? "TAX INVOICE" : "INVOICE";
+  const discAmt = inv.subtotal*(inv.discount_pct||0)/100;
+  document.getElementById("invoiceBody").innerHTML = `
+    <div class="ihead">
+      <div><h2>${esc(b.name||"RetailOps")}</h2>
+        ${b.address?`<div class="muted" style="font-size:12px">${esc(b.address)}</div>`:""}
+        ${b.phone?`<div class="muted" style="font-size:12px">☎ ${esc(b.phone)}</div>`:""}
+        ${b.gstin?`<div class="muted" style="font-size:12px">GSTIN: ${esc(b.gstin)}</div>`:""}</div>
+      <div class="meta"><strong>${esc(title)}</strong><br>${esc(inv.invoice_no||('#'+inv.invoice_id))}<br>${fmtDate(inv.created_at)}</div>
+    </div>
+    <div class="bill-to"><span class="muted">Billed to</span><br>
+      <strong>${cust?esc(cust.name):"Walk-in customer"}</strong>
+      ${cust&&cust.address?`<br>${esc(cust.address)}`:""}
+      ${cust&&cust.phone?`<br>${esc(cust.phone)}`:""}
+      ${cust&&cust.gstin?`<br>GSTIN: ${esc(cust.gstin)}`:""}</div>
+    <table><thead><tr><th>Item</th>${hasGst?'<th>HSN</th>':''}<th class="r">Qty</th><th class="r">Rate</th>${hasGst?'<th class="r">GST</th>':''}<th class="r">Amount</th></tr></thead><tbody>
+      ${inv.lines.map(l=>`<tr><td>${esc(l.product_name)}</td>${hasGst?`<td>${esc(l.hsn_code||'—')}</td>`:''}<td class="r num">${l.qty}</td><td class="r num">${money2(l.unit_price)}</td>${hasGst?`<td class="r num">${(l.gst_rate||0)}%</td>`:''}<td class="r num">${money2(l.line_total)}</td></tr>`).join("")}
+    </tbody></table>
+    <div class="totals">
+      <div class="l"><span>Subtotal</span><span class="num">${money2(inv.subtotal)}</span></div>
+      ${(inv.discount_pct||0)?`<div class="l"><span>Discount ${inv.discount_pct}%</span><span class="num">−${money2(discAmt)}</span></div>`:''}
+      ${hasGst?`<div class="l"><span>CGST</span><span class="num">${money2(inv.cgst)}</span></div>
+      <div class="l"><span>SGST</span><span class="num">${money2(inv.sgst)}</span></div>`:''}
+      <div class="l grand"><span>Total</span><span class="num">${money2(inv.total)}</span></div>
+      <div class="l"><span>Paid (${esc(inv.payment_mode||'Cash')})</span><span class="num">${money2(inv.amount_paid)}</span></div>
+      <div class="l"><span>Balance due</span><span class="num" style="color:${(inv.balance_due||0)>0.005?'var(--loss)':'var(--teal)'}">${money2(inv.balance_due)}</span></div>
+    </div>
+    <div class="foot">${(inv.balance_due||0)>0.005?`Status: ${esc(inv.status)} · `:''}Thank you for your business · Generated by ${esc(b.name||"RetailOps")}</div>
+    <div class="modal-actions">
+      <button class="ghost" onclick="closeInvoice()">Close</button>
+      <button class="primary" onclick="window.print()">Print</button>
+    </div>`;
+  document.getElementById("invoiceModal").classList.add("show");
+}
+function closeInvoice(){document.getElementById("invoiceModal").classList.remove("show");}
+document.getElementById("invoiceModal").onclick=e=>{if(e.target.id==="invoiceModal")closeInvoice();};
+
+/* ===================== PRODUCTS ===================== */
+async function loadProducts(){
+  await refreshShared();
+  const cats = await get("/api/categories");
+  const catName = id => (cats.find(c=>c.id===id)||{}).name || "—";
+  document.getElementById("prodCount").textContent = `${state.products.length} products`;
+  document.getElementById("prodList").innerHTML = state.products.map(p=>
+    `<tr><td>${esc(p.name)}</td><td><span class="tag-cat">${esc(catName(p.category_id))}</span></td>
+      <td class="r num">${money2(p.cost)}</td><td class="r num">${money2(p.mrp)}</td>
+      <td class="r num">${(p.gst_rate||0)}%</td>
+      <td class="r num">${money2(p.margin)}</td><td class="r num">${p.stock}</td>
+      <td class="r"><button class="ghost tiny" data-edit="${p.id}">Edit</button>
+      <button class="danger tiny" data-del="${p.id}">Del</button></td></tr>`).join("");
+  document.getElementById("pCat").innerHTML = `<option value="">— none —</option>`+
+    cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  document.querySelectorAll("#prodList [data-edit]").forEach(b=>b.onclick=()=>fillProduct(+b.dataset.edit));
+  document.querySelectorAll("#prodList [data-del]").forEach(b=>b.onclick=()=>delProduct(+b.dataset.del));
+}
+function fillProduct(id){
+  const p=state.products.find(x=>x.id===id);if(!p)return;
+  document.getElementById("prodFormTitle").textContent="Edit "+p.name;
+  document.getElementById("prodId").value=p.id;
+  document.getElementById("pName").value=p.name;
+  document.getElementById("pCat").value=p.category_id||"";
+  document.getElementById("pCost").value=p.cost;document.getElementById("pMrp").value=p.mrp;
+  document.getElementById("pStock").value=p.stock;document.getElementById("pLead").value=p.lead_time_days;
+  document.getElementById("pHsn").value=p.hsn_code||"";document.getElementById("pGst").value=p.gst_rate||0;
+  document.getElementById("pSave").textContent="Update product";
+}
+function resetProduct(){
+  document.getElementById("prodForm").reset();document.getElementById("prodId").value="";
+  document.getElementById("prodFormTitle").textContent="New product";
+  document.getElementById("pSave").textContent="Save product";document.getElementById("prodOut").innerHTML="";
+}
+document.getElementById("pReset").onclick=resetProduct;
+async function delProduct(id){
+  if(!confirm("Delete this product?"))return;
+  const r=await fetch(API+"/api/products/"+id,{method:"DELETE"});const j=await r.json();
+  if(!r.ok){document.getElementById("prodOut").innerHTML=`<span class="err">${esc(j.detail)}</span>`;return;}
+  resetProduct();loadProducts();
+}
+document.getElementById("prodForm").onsubmit=async e=>{
+  e.preventDefault();const out=document.getElementById("prodOut");
+  const id=document.getElementById("prodId").value;
+  const body={name:document.getElementById("pName").value,
+    category_id:document.getElementById("pCat").value?+document.getElementById("pCat").value:null,
+    cost:+document.getElementById("pCost").value,mrp:+document.getElementById("pMrp").value,
+    stock:+document.getElementById("pStock").value,lead_time_days:+document.getElementById("pLead").value,
+    hsn_code:document.getElementById("pHsn").value,gst_rate:+document.getElementById("pGst").value||0};
+  const url=id?"/api/products/"+id:"/api/products";const method=id?"PATCH":"POST";
+  const r=await fetch(API+url,{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const j=await r.json();
+  if(!r.ok){out.innerHTML=`<span class="err">${esc(j.detail||"Error")}</span>`;return;}
+  resetProduct();out.innerHTML=`<span class="ok">Saved "${esc(j.name)}".</span>`;
+  await loadProducts();
+};
+
+/* ===================== CUSTOMERS ===================== */
+async function loadCustomers(){
+  state.customers = await get("/api/customers");
+  document.getElementById("custCount").textContent=`${state.customers.length} customers`;
+  document.getElementById("custList").innerHTML = state.customers.map(c=>
+    `<tr><td>${esc(c.name)}</td><td>${esc(c.phone)||"—"}</td><td>${esc(c.gstin)||"—"}</td>
+      <td class="r"><button class="ghost tiny" data-edit="${c.id}">Edit</button>
+      <button class="danger tiny" data-del="${c.id}">Del</button></td></tr>`).join("");
+  document.querySelectorAll("#custList [data-edit]").forEach(b=>b.onclick=()=>fillCustomer(+b.dataset.edit));
+  document.querySelectorAll("#custList [data-del]").forEach(b=>b.onclick=async ()=>{
+    if(!confirm("Delete this customer?"))return;
+    const r=await fetch(API+"/api/customers/"+b.dataset.del,{method:"DELETE"});
+    const j=await r.json();const out=document.getElementById("custOut");
+    if(!r.ok){out.innerHTML=`<span class="err">${esc(j.detail||"Error")}</span>`;return;}
+    out.innerHTML=`<span class="ok">Customer deleted.</span>`;await loadCustomers();
+  });
+}
+function fillCustomer(id){
+  const c=state.customers.find(x=>x.id===id);if(!c)return;
+  document.getElementById("custFormTitle").textContent="Edit "+c.name;
+  document.getElementById("custId").value=c.id;document.getElementById("cName").value=c.name;
+  document.getElementById("cAddr").value=c.address||"";document.getElementById("cPhone").value=c.phone||"";
+  document.getElementById("cEmail").value=c.email||"";
+  document.getElementById("cGstin").value=c.gstin||"";
+}
+function resetCustomer(){
+  document.getElementById("custForm").reset();document.getElementById("custId").value="";
+  document.getElementById("custFormTitle").textContent="New customer";document.getElementById("custOut").innerHTML="";
+}
+document.getElementById("cReset").onclick=resetCustomer;
+document.getElementById("custForm").onsubmit=async e=>{
+  e.preventDefault();const out=document.getElementById("custOut");
+  const id=document.getElementById("custId").value;
+  const body={name:document.getElementById("cName").value,address:document.getElementById("cAddr").value,
+    phone:document.getElementById("cPhone").value,email:document.getElementById("cEmail").value,
+    gstin:document.getElementById("cGstin").value};
+  const url=id?"/api/customers/"+id:"/api/customers";const method=id?"PATCH":"POST";
+  const r=await fetch(API+url,{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const j=await r.json();
+  if(!r.ok){out.innerHTML=`<span class="err">${esc(j.detail||"Error")}</span>`;return;}
+  resetCustomer();out.innerHTML=`<span class="ok">Saved "${esc(j.name)}".</span>`;
+  await loadCustomers();
+};
+
+/* ===================== CATEGORIES ===================== */
+async function loadCategories(){
+  const cats = await get("/api/categories");
+  document.getElementById("catCount").textContent=`${cats.length} categories`;
+  document.getElementById("catList").innerHTML = cats.map(c=>
+    `<tr><td>${esc(c.name)}</td><td class="r num">${c.product_count}</td>
+      <td class="r"><button class="danger tiny" data-del="${c.id}" ${c.product_count?'title="Move its products elsewhere first"':''}>Del</button></td></tr>`).join("")
+    || `<tr><td colspan="3" class="empty">No categories yet.</td></tr>`;
+  document.querySelectorAll("#catList [data-del]").forEach(b=>b.onclick=async ()=>{
+    if(!confirm("Delete this category?"))return;
+    const r=await fetch(API+"/api/categories/"+b.dataset.del,{method:"DELETE"});
+    const j=await r.json();
+    const out=document.getElementById("catOut");
+    if(!r.ok){out.innerHTML=`<span class="err">${esc(j.detail||"Error")}</span>`;return;}
+    out.innerHTML=`<span class="ok">Category deleted.</span>`;loadCategories();
+  });
+}
+document.getElementById("catForm").onsubmit=async e=>{
+  e.preventDefault();const out=document.getElementById("catOut");
+  const r=await fetch(API+"/api/categories",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({name:document.getElementById("catName").value})});
+  const j=await r.json();
+  if(!r.ok){out.innerHTML=`<span class="err">${esc(j.detail||"Error")}</span>`;return;}
+  document.getElementById("catForm").reset();out.innerHTML=`<span class="ok">Added "${esc(j.name)}".</span>`;
+  await loadCategories();
+};
+
+/* ===================== EXPENSES ===================== */
+async function loadExpenses(){
+  const exp = await get("/api/expenses");
+  const total = exp.reduce((s,e)=>s+e.amount,0);
+  const byCat = {};exp.forEach(e=>byCat[e.category]=(byCat[e.category]||0)+e.amount);
+  const topCat = Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById("expKpis").innerHTML = [
+    ["Total expenses", money(total),""],
+    ["Entries", exp.length,""],
+    ["Largest category", topCat?`${topCat[0]}`:"—", topCat?money(topCat[1]):""],
+  ].map(([l,v,s])=>`<div class="kpi"><div class="label">${l}</div><div class="value num">${v}</div>${s?`<div class="sub">${s}</div>`:""}</div>`).join("");
+  document.getElementById("expCount").textContent=`${exp.length} entries`;
+  document.getElementById("expList").innerHTML = exp.length ? exp.map(e=>
+    `<tr><td>${fmtDate(e.date)}</td><td><span class="tag-cat">${esc(e.category)}</span></td>
+      <td>${esc(e.payee)||"—"}</td><td>${esc(e.description)||"—"}</td>
+      <td class="r num">${money2(e.amount)}</td>
+      <td class="r"><button class="danger tiny" data-del="${e.id}">Del</button></td></tr>`).join("")
+    : `<tr><td colspan="6" class="empty">No expenses logged yet.</td></tr>`;
+  document.querySelectorAll("#expList [data-del]").forEach(b=>b.onclick=async ()=>{
+    if(!confirm("Delete this expense?"))return;
+    await fetch(API+"/api/expenses/"+b.dataset.del,{method:"DELETE"});loadExpenses();
+  });
+}
+document.getElementById("expForm").onsubmit=async e=>{
+  e.preventDefault();const out=document.getElementById("expOut");
+  const body={category:document.getElementById("eCat").value,payee:document.getElementById("ePayee").value,
+    description:document.getElementById("eDesc").value,amount:+document.getElementById("eAmount").value};
+  const r=await fetch(API+"/api/expenses",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const j=await r.json();
+  if(!r.ok){out.innerHTML=`<span class="err">${esc((j.detail&&j.detail[0]&&j.detail[0].msg)||j.detail||"Error")}</span>`;return;}
+  document.getElementById("expForm").reset();out.innerHTML=`<span class="ok">Saved ${money(j.amount)} ${esc(j.category)} expense.</span>`;
+  await loadExpenses();
+};
+
+/* ===================== SETTINGS ===================== */
+async function loadSettings(){
+  const prof = await get("/api/profile"); state.profile = prof||{};
+  document.getElementById("bName").value=prof.name||"";
+  document.getElementById("bAddr").value=prof.address||"";
+  document.getElementById("bPhone").value=prof.phone||"";
+  document.getElementById("bEmail").value=prof.email||"";
+  document.getElementById("bGstin").value=prof.gstin||"";
+  document.getElementById("bState").value=prof.state||"";
+  const g = await get("/api/analytics/gst");
+  document.getElementById("gstBox").innerHTML = `
+    <div class="pl-flow">
+      <div class="pl-step"><div class="l">CGST</div><div class="v">${money(g.cgst)}</div></div>
+      <div class="pl-step"><div class="l">SGST</div><div class="v">${money(g.sgst)}</div></div>
+      <div class="pl-step net good"><div class="l">Total GST</div><div class="v">${money(g.total_gst)}</div></div>
+    </div>
+    <p class="muted" style="margin-top:12px;font-size:12px">Output GST collected across all invoices. Set each product's GST rate in the Products tab.</p>`;
+}
+document.getElementById("profForm").onsubmit=async e=>{
+  e.preventDefault();const out=document.getElementById("profOut");
+  const body={name:document.getElementById("bName").value,address:document.getElementById("bAddr").value,
+    phone:document.getElementById("bPhone").value,email:document.getElementById("bEmail").value,
+    gstin:document.getElementById("bGstin").value,state:document.getElementById("bState").value};
+  const r=await fetch(API+"/api/profile",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const j=await r.json();
+  if(!r.ok){out.innerHTML=`<span class="err">Error saving profile</span>`;return;}
+  state.profile=j;out.innerHTML=`<span class="ok">Profile saved. It will appear on printed invoices.</span>`;
+};
+
+/* ---------- boot ---------- */
+(async function init(){ await refreshShared(); show("dashboard"); startAuto(); })();
+</script>
+</body>
+</html>

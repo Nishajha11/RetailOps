@@ -1,0 +1,14 @@
+services:
+  retailops:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # Swap to Postgres in production by uncommenting and pointing at your DB:
+      # DATABASE_URL: postgresql+psycopg://retail:retail@db/retailops
+      SERVICE_LEVEL_Z: "1.65"
+      DEFAULT_LEAD_TIME_DAYS: "7"
+    volumes:
+      - retail_data:/app
+volumes:
+  retail_data:
